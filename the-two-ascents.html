@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Two Ascents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F2EFE7; --ink:#1F1F1E; --soft:#6E6B66; --rule:#D9D5CC;
+  --gold:#9C7C36; --bg-emph:#E9E5D8;
+  --right:#A8602E;  /* mercy / force — warm */
+  --left:#3E5A6E;   /* severity / form — cool */
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#262421; --ink:#D6D3CC; --soft:#908B82; --rule:#322F2C;
+  --gold:#B89351; --bg-emph:#302D29;
+  --right:#C9824E; --left:#6E94AC;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme]){
+    color-scheme:dark;
+    --bg:#262421; --ink:#D6D3CC; --soft:#908B82; --rule:#322F2C;
+    --gold:#B89351; --bg-emph:#302D29;
+    --right:#C9824E; --left:#6E94AC;
+  }
+}
+html{background:var(--bg);}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:'Crimson Pro',Georgia,serif; font-weight:400;
+  font-size:18px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:8px 22px 90px;}
+
+/* ── header ── */
+header{text-align:center; margin-bottom:30px;}
+.kicker{
+  font-family:'Source Sans 3',sans-serif; font-size:.72rem; font-weight:600;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--gold);
+  margin:0 0 10px;
+}
+h1{
+  font-family:'Cormorant',serif; font-style:italic; font-weight:500;
+  font-size:2.7rem; margin:0; line-height:1.05;
+}
+.lede{
+  max-width:680px; margin:14px auto 0; color:var(--soft);
+  font-size:1.02rem;
+}
+
+/* ── top bar ── */
+.topbar{
+  position:sticky; top:0; z-index:30;
+  display:flex; align-items:center; justify-content:center;
+  width:100%; padding:8px 14px; margin:0 0 30px;
+  background:color-mix(in srgb, var(--bg) 86%, transparent);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--rule);
+}
+#theme-toggle{
+  position:absolute; right:14px; top:50%; transform:translateY(-50%);
+  background:none; border:1px solid var(--rule); border-radius:50%;
+  width:30px; height:30px; cursor:pointer; color:var(--soft);
+  font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center;
+}
+#theme-toggle:hover{color:var(--ink);}
+
+.toggle{
+  display:flex; gap:0; width:max-content; max-width:calc(100% - 80px);
+  border:1px solid var(--rule); border-radius:999px;
+  overflow:hidden; background:var(--bg-emph);
+}
+.toggle button{
+  font-family:'Source Sans 3',sans-serif; font-size:.58rem; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase;
+  padding:6px 16px; border:none; background:none; cursor:pointer;
+  color:var(--soft); transition:color .2s, background .2s; min-width:0; white-space:nowrap;
+}
+.toggle button .tag{display:block; font-size:.48rem; letter-spacing:.07em; opacity:.7; margin-top:1px; white-space:nowrap;}
+.toggle button[data-on="right"][aria-pressed="true"]{background:var(--right); color:#fff;}
+.toggle button[data-on="left"][aria-pressed="true"]{background:var(--left); color:#fff;}
+
+/* ── layout ── */
+.stage{display:grid; grid-template-columns:300px 1fr; gap:42px; align-items:start;}
+.tree-col{position:sticky; top:56px; z-index:5; background:var(--bg); padding:10px 4px; border-radius:8px;}
+.tree-col svg{max-width:260px; margin:0 auto;}
+@media(max-width:820px){
+  .stage{grid-template-columns:1fr; gap:18px;}
+  .tree-col{position:relative; top:0; max-width:230px; margin:0 auto 8px; padding:6px;}
+  .tree-col svg{max-width:200px;}
+}
+
+/* ── svg ── */
+svg{width:100%; height:auto; display:block; overflow:visible;}
+.path-edge{stroke:var(--rule); stroke-width:1; fill:none;}
+.node-circle{fill:var(--bg); stroke:var(--soft); stroke-width:0.7;}
+.node-num{font-family:'Source Sans 3',sans-serif; font-size:9px; font-weight:600; fill:var(--soft); text-anchor:middle; dominant-baseline:central;}
+.node-name{font-family:'Cormorant',serif; font-style:italic; font-size:8px; fill:var(--soft); text-anchor:middle;}
+.daath{fill:none; stroke:var(--rule); stroke-width:0.7; stroke-dasharray:3 3;}
+
+/* active path highlighting */
+.right-active .focus .node-circle,.left-active .focus .node-circle{stroke-width:1.8;}
+.right-active .lit-r .node-circle{stroke:var(--right); stroke-width:1.5;}
+.right-active .lit-r .node-num,.right-active .lit-r .node-name{fill:var(--right);}
+.right-active .edge-r{stroke:var(--right); stroke-width:2;}
+.left-active .lit-l .node-circle{stroke:var(--left); stroke-width:1.5;}
+.left-active .lit-l .node-num,.left-active .lit-l .node-name{fill:var(--left);}
+.left-active .edge-l{stroke:var(--left); stroke-width:2;}
+/* current focused station */
+.right-active .focus .node-circle{fill:var(--right); stroke:var(--right); filter:drop-shadow(0 0 5px var(--right));}
+.right-active .focus .node-num{fill:#fff;}
+.left-active .focus .node-circle{fill:var(--left); stroke:var(--left); filter:drop-shadow(0 0 5px var(--left));}
+.left-active .focus .node-num{fill:#fff;}
+
+/* ── text column ── */
+.intro{margin:0 0 30px; padding:18px 22px; border-left:3px solid; background:var(--bg-emph);}
+.right-active .intro{border-color:var(--right);}
+.left-active .intro{border-color:var(--left);}
+.intro .title{
+  font-family:'Cormorant',serif; font-style:italic; font-weight:500; font-size:1.5rem;
+  margin:0 0 6px;
+}
+.intro p{margin:0; color:var(--ink);}
+
+.station{margin:0 0 8px; padding:0 0 26px; border-bottom:1px solid var(--rule);}
+.station:last-child{border-bottom:none;}
+.st-head{display:flex; align-items:baseline; gap:12px; margin:24px 0 4px;}
+.st-num{
+  font-family:'Source Sans 3',sans-serif; font-weight:700; font-size:.78rem;
+  letter-spacing:.1em; padding:3px 9px; border-radius:4px; color:#fff;
+}
+.right-active .st-num{background:var(--right);}
+.left-active .st-num{background:var(--left);}
+.st-name{font-family:'Cormorant',serif; font-style:italic; font-weight:600; font-size:1.65rem;}
+.st-name .heb{font-style:normal; font-family:'Source Sans 3',sans-serif; font-size:1.05rem; color:var(--gold); margin-left:8px;}
+.st-onto{
+  font-family:'Source Sans 3',sans-serif; font-size:.7rem; font-weight:600;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--gold); margin:0 0 14px;
+}
+.station > p{margin:0 0 12px;}
+
+/* gradient sub-steps — the walking between */
+.grade{margin:14px 0 4px; padding-left:20px; position:relative;}
+.grade::before{
+  content:""; position:absolute; left:0; top:9px; width:9px; height:9px;
+  border-radius:50%; border:1.5px solid var(--soft);
+}
+.right-active .grade::before{border-color:var(--right);}
+.left-active .grade::before{border-color:var(--left);}
+.grade .gh{
+  font-family:'Source Sans 3',sans-serif; font-size:.68rem; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--soft);
+}
+.grade p{margin:3px 0 0; font-size:.97rem; color:var(--ink);}
+
+.hide{display:none;}
+.across{margin:14px 0 0; padding:12px 0 0; border-top:1px solid var(--rule); font-size:.93rem; color:var(--soft);}
+.across-label{display:block; font-family:'Source Sans 3',sans-serif; font-size:.62rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); margin-bottom:5px;}
+.station .across{margin:14px 0 0;}
+.foot{margin-top:46px; text-align:center; font-family:'Source Sans 3',sans-serif;
+  letter-spacing:.3em; font-size:.66rem; color:var(--soft); text-transform:uppercase;}
+em.k{font-style:italic; color:var(--ink);}
+</style>
+</head>
+<body class="right-active">
+<div class="topbar">
+  <div class="toggle" role="group" aria-label="Choose a path">
+    <button data-on="left" aria-pressed="false">Left · Form</button>
+    <button data-on="right" aria-pressed="true">Right · Force</button>
+  </div>
+  <button id="theme-toggle" aria-label="Toggle theme">☾</button>
+</div>
+<div class="wrap">
+
+<header>
+  <p class="kicker">The Tree of Life · Outer Pillars</p>
+  <h1>The Two Ascents</h1>
+  <p class="lede">One soul, two climbs. Not from station to station only, but through the whole graded altitude between them — the lower air thick and unaware, the upper air transparent and self-knowing. Each pillar is a different cure for the same dividedness.</p>
+</header>
+
+
+<div class="stage">
+
+  <!-- ── TREE ── -->
+  <div class="tree-col">
+    <svg viewBox="0 0 121 253" role="img" aria-label="Tree of Life with the active ascent traced">
+      <!-- TRUE four-circle construction (from the-point-fulfilled). R=80, four
+           circles centred y=90,170,250,330 spaced by R. Sefirot are the figure's
+           own points: Kether=C1 centre, Tiph=C3 centre, Yesod=C4 centre,
+           Malkuth=C4 south pole, Daath=C2 centre; the three lateral pairs are the
+           adjacent-circle vesica chords at y=130,210,290. Every unit edge = R = 80;
+           every rung = R*sqrt3 = 138.56. Scaled 0.55. -->
+      <g class="edges-bg">
+        <line class="path-edge" x1="60.5" y1="49.5" x2="98.605" y2="71.5"/>
+        <line class="path-edge" x1="60.5" y1="49.5" x2="22.395" y2="71.5"/>
+        <line class="path-edge" x1="98.605" y1="71.5" x2="22.395" y2="71.5"/>
+        <line class="path-edge" x1="98.605" y1="71.5" x2="98.605" y2="115.5"/>
+        <line class="path-edge" x1="22.395" y1="71.5" x2="22.395" y2="115.5"/>
+        <line class="path-edge" x1="98.605" y1="115.5" x2="22.395" y2="115.5"/>
+        <line class="path-edge" x1="98.605" y1="71.5" x2="60.5" y2="137.5"/>
+        <line class="path-edge" x1="22.395" y1="71.5" x2="60.5" y2="137.5"/>
+        <line class="path-edge" x1="98.605" y1="115.5" x2="60.5" y2="137.5"/>
+        <line class="path-edge" x1="22.395" y1="115.5" x2="60.5" y2="137.5"/>
+        <line class="path-edge" x1="98.605" y1="115.5" x2="98.605" y2="159.5"/>
+        <line class="path-edge" x1="22.395" y1="115.5" x2="22.395" y2="159.5"/>
+        <line class="path-edge" x1="60.5" y1="137.5" x2="98.605" y2="159.5"/>
+        <line class="path-edge" x1="60.5" y1="137.5" x2="22.395" y2="159.5"/>
+        <line class="path-edge" x1="98.605" y1="159.5" x2="22.395" y2="159.5"/>
+        <line class="path-edge" x1="60.5" y1="137.5" x2="60.5" y2="181.5"/>
+        <line class="path-edge" x1="98.605" y1="159.5" x2="60.5" y2="181.5"/>
+        <line class="path-edge" x1="22.395" y1="159.5" x2="60.5" y2="181.5"/>
+        <line class="path-edge" x1="98.605" y1="159.5" x2="60.5" y2="225.5"/>
+        <line class="path-edge" x1="22.395" y1="159.5" x2="60.5" y2="225.5"/>
+        <line class="path-edge" x1="60.5" y1="181.5" x2="60.5" y2="225.5"/>
+        <line class="path-edge" x1="60.5" y1="49.5" x2="60.5" y2="137.5"/>
+      </g>
+
+      <line class="path-edge edge-r" x1="60.5" y1="225.5" x2="98.605" y2="159.5"/>
+      <line class="path-edge edge-r" x1="98.605" y1="159.5" x2="98.605" y2="115.5"/>
+      <line class="path-edge edge-r" x1="98.605" y1="115.5" x2="98.605" y2="71.5"/>
+      <line class="path-edge edge-l" x1="60.5" y1="225.5" x2="22.395" y2="159.5"/>
+      <line class="path-edge edge-l" x1="22.395" y1="159.5" x2="22.395" y2="115.5"/>
+      <line class="path-edge edge-l" x1="22.395" y1="115.5" x2="22.395" y2="71.5"/>
+      <circle class="daath" cx="60.5" cy="93.5" r="10"/>
+
+      <g class="node"><circle class="node-circle" cx="60.5" cy="49.5" r="10"/><text class="node-num" x="60.5" y="49.5">1</text></g>
+      <g class="node lit lit-r" data-st="r3"><circle class="node-circle" cx="98.605" cy="71.5" r="10"/><text class="node-num" x="98.605" y="71.5">2</text></g>
+      <g class="node lit lit-l" data-st="l3"><circle class="node-circle" cx="22.395" cy="71.5" r="10"/><text class="node-num" x="22.395" y="71.5">3</text></g>
+      <g class="node lit lit-r" data-st="r2"><circle class="node-circle" cx="98.605" cy="115.5" r="10"/><text class="node-num" x="98.605" y="115.5">4</text></g>
+      <g class="node lit lit-l" data-st="l2"><circle class="node-circle" cx="22.395" cy="115.5" r="10"/><text class="node-num" x="22.395" y="115.5">5</text></g>
+      <g class="node"><circle class="node-circle" cx="60.5" cy="137.5" r="10"/><text class="node-num" x="60.5" y="137.5">6</text></g>
+      <g class="node lit lit-r" data-st="r1"><circle class="node-circle" cx="98.605" cy="159.5" r="10"/><text class="node-num" x="98.605" y="159.5">7</text></g>
+      <g class="node lit lit-l" data-st="l1"><circle class="node-circle" cx="22.395" cy="159.5" r="10"/><text class="node-num" x="22.395" y="159.5">8</text></g>
+      <g class="node"><circle class="node-circle" cx="60.5" cy="181.5" r="10"/><text class="node-num" x="60.5" y="181.5">9</text></g>
+      <g class="node lit lit-r lit-l" data-st="m0"><circle class="node-circle" cx="60.5" cy="225.5" r="10"/><text class="node-num" x="60.5" y="225.5">10</text></g>
+      <text class="node-name" x="60.5" y="245.5">Malkuth · the floor</text>
+    </svg>
+  </div>
+
+  <!-- ── TEXT ── -->
+  <div class="text-col">
+    <div id="panel-right">
+      <div class="intro">
+        <p class="title">The Right Pillar — the Ascent of Force</p>
+        <p>This is the climb of <em class="k">outflow</em>. The soul begins as raw appetite — a wanting that does not yet know what it wants — and is asked, at each altitude, to keep its expansive nature while learning not to deform whatever it pours itself into. Force is never extinguished here; it is purified until giving no longer overwhelms the one who receives.</p>
+        <p class="across"><span class="across-label">Across the pillar</span>At every rung the left pillar climbs the opposite cure. Where Force expands and must learn measure, Form contracts and must learn not to wall off; where this pillar risks the flood that drowns, the other risks the boundary that excludes. They are not mirror images of one path but two answers to the one dividedness — the soul that gives too much and the soul that holds too tightly.</p>
+      </div>
+    </div>
+    <div id="panel-left" class="hide">
+      <div class="intro">
+        <p class="title">The Left Pillar — the Ascent of Form</p>
+        <p>This is the climb of <em class="k">restraint</em>. The soul begins as anxious measuring — a mind that grips because it fears loss — and is asked, at each altitude, to keep its limiting nature while learning not to harden into what it shuts out. Form is never dissolved here; it is purified until the boundary that cuts becomes the womb that holds.</p>
+        <p class="across"><span class="across-label">Across the pillar</span>At every rung the right pillar climbs the opposite cure. Where Form contracts and must learn not to wall off, Force expands and must learn measure; where this pillar risks the boundary that excludes, the other risks the flood that drowns. They are not mirror images of one path but two answers to the one dividedness — the soul that holds too tightly and the soul that gives too much.</p>
+      </div>
+    </div>
+    <div id="stations"></div>
+  </div>
+
+</div>
+
+<p class="foot">IHSVH</p>
+</div>
+
+<script>
+(function(){
+  // theme
+  var tt=document.getElementById('theme-toggle');
+  function sysDark(){return window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches;}
+  function cur(){var a=document.documentElement.getAttribute('data-theme'); return a?a:(sysDark()?'dark':'light');}
+  function apply(t){document.documentElement.setAttribute('data-theme',t); tt.textContent=t==='dark'?'☀':'☾';}
+  apply(cur());
+  tt.addEventListener('click',function(){apply(cur()==='dark'?'light':'dark');});
+})();
+</script>
+<script>
+(function(){
+  // ── content ──
+  var DATA = {
+    right: [
+      { id:'r0', num:'X', name:'Malkuth', heb:'מלכות', onto:'Being received, not originated',
+        body:'Both ascents begin on one floor, and the floor is a single ontological condition: here being is wholly received and originates nothing of itself. This is not yet a feeling — it is the soul\u2019s structural standing, the lowest term of the descent, where everything arrives and nothing begins. <em>From within, this received-being registers as want.</em> A being that cannot originate meets its own condition as something missing; the privation is not added to it but is what it is, read from inside. <em>Therefore the soul reaches.</em> The want becomes motion outward — toward what shines, toward what it does not have — and that reaching is the engine of the right pillar. The structure is the same on both sides; only the registration, and the movement that follows, divide.',
+        grades:[
+          {h:'The condition', t:'The being-structure: received, not originated. Fully conditioned, scarcely distinct from its surroundings — the place where everything arrives and nothing begins. This much is true of both pillars equally.'},
+          {h:'The registration', t:'From within, received-being is met as want. The soul does not yet know what it wants — only that it cannot originate, and so encounters its condition as something missing. This is the interior reading, not the structure itself.'},
+          {h:'The movement', t:'Therefore the soul reaches. Want becomes motion outward and upward toward whatever might complete it, and the climb of force begins.'}
+        ],
+        across:'The left pillar climbs from the identical structure — being received, not originated — but reads it otherwise. This divergence is hermeneutical, and it belongs to the floor alone: at Malkuth a single condition is read two ways, and the reading is what turns the soul toward one pillar or the other. What it turns toward, though, is no interpretation. Above the floor the pillars are real powers inherent in manifestation — Force and Form, each a structural principle the soul ascends into, not a mood it elaborates. The reading selects the door; the ascent enters an actual room. From within, the same received-being that registers here as want registers there as exposure: want sends one outward to acquire, exposure sends the other inward to secure.'},
+      { id:'r1', num:'VII', name:'Netzach', heb:'נצח', onto:'Being attracted beyond itself, without discrimination',
+        body:'Force, as a real power, first stands here: being drawn outward beyond its own bounds, but without yet any discrimination as to what it is drawn toward. The attraction is structural — to be expansive is to lean past oneself — and at this altitude it has no measure and no chosen object. From within, this undiscriminating attraction is met as desire: the soul wants, and does not yet know what it wants. Therefore it reaches toward whatever shines, seizing nothing, moved by every bright surface — force fully alive and fully blind, leaning at everything because it cannot yet lean at one thing.',
+        grades:[
+          {h:'The condition', t:'Being attracted beyond itself, without discrimination. Expansion as a real power, leaning past its own bounds, but with no measure and no chosen object yet.'},
+          {h:'The registration', t:'Encountered as desire — wanting that does not yet know its want. From within, undiscriminating attraction can only appear as indiscriminate longing.'},
+          {h:'The movement', t:'Reaches toward whatever shines. The soul attaches to the nearest and brightest, mistaking intensity for direction; it must learn that to lean at everything is to give nothing truly.'}
+        ],
+        across:'At this altitude the left pillar stands in Hod: where Netzach reaches toward everything without measure, Hod grips each thing without trust. Both are the soul\u2019s first raw power and both are blind — one blind by spilling outward, the other blind by clutching inward.'},
+      { id:'r2', num:'IV', name:'Chesed', heb:'חסד', onto:'Being that gives by overflowing',
+        body:'Force matured becomes a source: being whose nature is to pour itself out, abundance that constitutes rather than consumes. The attraction of Netzach has found its proper motion — no longer pulling the world inward but giving outward. From within, this overflowing is met as generosity, the joy of being a wellspring. Therefore the soul gives — and gives, at first, too much: it floods, mistaking its own overflow for love, and drowns the one it meant to nourish. Mercy must learn its measure; abundance is never reduced here, only ordered toward what the other can actually receive. This is force grown trustworthy.',
+        grades:[
+          {h:'The condition', t:'Being that gives by overflowing. Force matured into a source — abundance whose nature is to pour outward, no longer to acquire.'},
+          {h:'The registration', t:'Encountered as generosity. From within, overflowing being feels like the joy of being a wellspring; the danger hides inside the joy.'},
+          {h:'The movement', t:'Gives — at first too much, flooding past what can be received. Mercy must learn its measure: abundance kept, but ordered toward the receiver\u2019s capacity.'}
+        ],
+        across:'Opposite Chesed stands Geburah. Both have matured past blindness into a real moral power, and both carry a matching danger: Chesed\u2019s is the flood that drowns by giving past what can be received; Geburah\u2019s is the wall that excludes by cutting past what should be cut. Mercy must learn its measure; severity must learn its purpose.'},
+      { id:'r3', num:'II', name:'Chokmah', heb:'חכמה', onto:'Being as pure originating act',
+        body:'At the head of the pillar, Force is no longer outflow toward anything — it is origination itself, the first act before there is any object to act upon. Chokmah is a primordial principle, not the culmination of the lower stations but their source: the lightning-flash in which to be and to will are one motion. From within, there is almost nothing left to register, because registration needs a subject set over against something, and here nothing is yet set over against. What remains is the bare yes of beginning. Therefore there is no movement toward — only the movement that is origination, the undivided act from which all expansion descends. The soul has not been dissolved; it has arrived at the root of what it always was.',
+        grades:[
+          {h:'The condition', t:'Being as pure originating act. Not the sum of the lower stations but their source — a primordial principle, the first motion in which being and willing are one.'},
+          {h:'The registration', t:'Almost nothing to register: registration needs a subject set against an object, and here nothing is yet set against anything. What remains is the bare yes of beginning.'},
+          {h:'The movement', t:'No movement toward — only origination itself, the undivided act from which all expansion descends. Arrival at the root, not dissolution.'}
+        ],
+        across:'At the summit the two pillars complete each other rather than oppose. Chokmah is pure outgoing impulse, the flash that gives without yet anything to give to; Binah, across from it, is pure containing form, the womb that receives that flash and makes it bearable. Force at its origin requires Form at its origin: the impulse would scatter without the boundary that holds it.'}
+    ],
+    left: [
+      { id:'l0', num:'X', name:'Malkuth', heb:'מלכות', onto:'Being received, not originated',
+        body:'Both ascents begin on one floor, and the floor is a single ontological condition: here being is wholly received and originates nothing of itself. This is not yet a feeling — it is the soul\u2019s structural standing, the lowest term of the descent, where everything arrives and nothing begins. <em>From within, this received-being registers as exposure.</em> A being with nothing self-originated has nothing held firmly its own, no edge it has drawn itself; and it meets that condition not as something missing but as something unguarded. <em>Therefore the soul secures.</em> It moves to mark off, to hold apart, to know where it ends and the formless begins — and that securing is the engine of the left pillar. The structure is the same on both sides; only the registration, and the movement that follows, divide.',
+        grades:[
+          {h:'The condition', t:'The being-structure: received, not originated. Fully conditioned, scarcely distinct from its surroundings — the place where everything arrives and nothing begins. This much is true of both pillars equally.'},
+          {h:'The registration', t:'From within, received-being is met as exposure. With nothing self-originated, the soul has no edge of its own, and encounters that not as lack but as a condition unguarded. This is the interior reading, not the structure itself.'},
+          {h:'The movement', t:'Therefore the soul secures. The need to mark a boundary becomes motion — dividing, naming, holding apart — and the climb of form begins.'}
+        ],
+        across:'The right pillar climbs from the identical structure — being received, not originated — but reads it otherwise. This divergence is hermeneutical, and it belongs to the floor alone: at Malkuth a single condition is read two ways, and the reading is what turns the soul toward one pillar or the other. What it turns toward, though, is no interpretation. Above the floor the pillars are real powers inherent in manifestation — Form and Force, each a structural principle the soul ascends into, not a mood it elaborates. The reading selects the door; the ascent enters an actual room. From within, the same received-being that registers here as exposure registers there as want: exposure sends one inward to secure, want sends the other outward to acquire.'},
+      { id:'l1', num:'VIII', name:'Hod', heb:'הוד', onto:'Being that differentiates',
+        body:'Form, as a real power, first stands here: being that distinguishes, that holds one thing apart from another and so makes the manifold knowable. Differentiation is structural — to be formed is to be bounded off from what one is not — and at this altitude it is exercised without trust, gripping each distinction as though it might dissolve. From within, this differentiating is met as the need to secure: the soul names, counts, divides, because the unbounded is unbearable to it. Therefore it measures, and measures compulsively, mistaking control for understanding — form fully active and fully insecure, holding boundaries in fear rather than in confidence.',
+        grades:[
+          {h:'The condition', t:'Being that differentiates. Form as a real power — distinguishing, holding apart, making the manifold knowable; here exercised without trust.'},
+          {h:'The registration', t:'Encountered as the need to secure. From within, differentiation feels like defense against dissolution; the boundary is clutched, not yet held with confidence.'},
+          {h:'The movement', t:'Names, counts, divides — compulsively, mistaking control for understanding. It must learn that a boundary held in fear shuts out as much truth as it secures.'}
+        ],
+        across:'At this altitude the right pillar stands in Netzach: where Hod grips each thing without trust, Netzach reaches toward everything without measure. Both are the soul\u2019s first raw power and both are blind — one blind by clutching inward, the other blind by spilling outward.'},
+      { id:'l2', num:'V', name:'Geburah', heb:'גבורה', onto:'Being that limits rightly',
+        body:'Form matured becomes judgment: being whose nature is to set the right boundary, to cut away what corrupts and hold a shape against the pressure to dissolve. The differentiation of Hod has steadied — no longer gripping from dread but limiting from justice, able to say no. From within, this rightful limiting is met as strength, the power to defend what matters. Therefore the soul cuts — and cuts, at first, too far: it mistakes severity for righteousness, walls off what should have opened, hardens into the very rigidity it once feared. Severity must learn its purpose; the cut is never softened here, only returned to what it serves — the good it was raised to protect. This is form grown trustworthy: severity becoming sustaining.',
+        grades:[
+          {h:'The condition', t:'Being that limits rightly. Form matured into judgment — setting the boundary, cutting what corrupts, holding shape against dissolution.'},
+          {h:'The registration', t:'Encountered as strength: the power to defend what matters. From within, rightful limit feels like force wielded justly; the danger hides inside the strength.'},
+          {h:'The movement', t:'Cuts — at first too far, walling off what should have opened. Severity must learn its purpose: the cut returned to what it serves, the good it was raised to protect.'}
+        ],
+        across:'Opposite Geburah stands Chesed. Both have matured past blindness into a real moral power, and both carry a matching danger: Geburah\u2019s is the wall that excludes by cutting past what should be cut; Chesed\u2019s is the flood that drowns by giving past what can be received. Severity must learn its purpose; mercy must learn its measure.'},
+      { id:'l3', num:'III', name:'Binah', heb:'בינה', onto:'Being as pure containing form',
+        body:'At the head of the pillar, Form is no longer a cut against anything — it is containment itself, the capacity to give bound shape to what would otherwise be unbearable in its boundlessness. Binah is a primordial principle, co-original with Chokmah and in no way derived from it: where the one is the flash that originates, the other is the womb that receives and makes the flash bearable, makes it real. From within, there is almost nothing left to register, because here there is no longer anything set over against the soul to defend against — only pure receptive shaping. What remains is the dark understanding that holds. Therefore there is no movement against — only the containing itself, limitation revealed not as loss but as the condition of anything\u2019s being at all. The cut was always a womb. The soul has arrived at the mother of form.',
+        grades:[
+          {h:'The condition', t:'Being as pure containing form. Co-original with Chokmah, not derived from it — the womb that gives bound shape to the boundless and makes it real.'},
+          {h:'The registration', t:'Almost nothing to register: nothing is set against the soul to defend against, only pure receptive shaping. What remains is the dark understanding that holds.'},
+          {h:'The movement', t:'No movement against — only containing itself. Limitation revealed not as loss but as the condition of any being at all. The cut was always a womb.'}
+        ],
+        across:'At the summit the two pillars complete each other rather than oppose. Binah is pure containing form, the womb that receives and gives shape; Chokmah, across from it, is the pure outgoing impulse it receives. Form at its origin requires Force at its origin: the boundary would be empty without the impulse it holds.'}
+    ]
+  };
+
+  var current='right';
+  var stations=document.getElementById('stations');
+
+  function render(){
+    var arr=DATA[current];
+    var html='';
+    arr.forEach(function(s){
+      var g='';
+      s.grades.forEach(function(x){
+        g+='<div class="grade"><span class="gh">'+x.h+'</span><p>'+x.t+'</p></div>';
+      });
+      var ac = s.across ? '<p class="across"><span class="across-label">Across the pillar</span>'+s.across+'</p>' : '';
+      html+=''
+       +'<div class="station" data-node="'+s.id+'">'
+       +'<div class="st-head"><span class="st-num">'+s.num+'</span>'
+       +'<span class="st-name">'+s.name+'<span class="heb">'+s.heb+'</span></span></div>'
+       +'<p class="st-onto">'+s.onto+'</p>'
+       +'<p>'+s.body+'</p>'
+       +g
+       +ac
+       +'</div>';
+    });
+    stations.innerHTML=html;
+  }
+
+  function setFocus(stId){
+    document.querySelectorAll('.node.focus').forEach(function(n){n.classList.remove('focus');});
+    if(stId){
+      if(stId==='r0'||stId==='l0') stId='m0';
+      var n=document.querySelector('.node[data-st="'+stId+'"]');
+      if(n) n.classList.add('focus');
+    }
+  }
+
+  function wireFocus(){
+    var sts=stations.querySelectorAll('.station');
+    if(!('IntersectionObserver' in window)){ return; }
+    var io=new IntersectionObserver(function(entries){
+      // pick the most-visible station
+      var best=null,bestR=0;
+      stations.querySelectorAll('.station').forEach(function(el){
+        var r=el.getBoundingClientRect();
+        var vh=window.innerHeight;
+        var vis=Math.max(0,Math.min(r.bottom,vh)-Math.max(r.top,0));
+        if(vis>bestR){bestR=vis; best=el;}
+      });
+      if(best) setFocus(best.getAttribute('data-node'));
+    },{threshold:[0,.25,.5,.75,1]});
+    sts.forEach(function(el){io.observe(el);});
+    // initial
+    if(sts.length) setFocus(sts[0].getAttribute('data-node'));
+  }
+
+  function setPath(p){
+    current=p;
+    document.body.className=(p==='right'?'right-active':'left-active');
+    document.querySelectorAll('.toggle button').forEach(function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-on')===p?'true':'false');
+    });
+    document.getElementById('panel-right').classList.toggle('hide',p!=='right');
+    document.getElementById('panel-left').classList.toggle('hide',p!=='left');
+    render();
+    wireFocus();
+  }
+
+  document.querySelectorAll('.toggle button').forEach(function(b){
+    b.addEventListener('click',function(){setPath(b.getAttribute('data-on'));});
+  });
+
+  setPath('right');
+})();
+</script>
+</body>
+</html>
